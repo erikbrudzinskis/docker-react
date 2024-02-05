@@ -1,0 +1,29 @@
+# Alternative to docker command:
+# docker run -v /app/node_modules -v $(pwd):/app erikbrudzinskis/react-frontend
+# With image built by:
+# docker build -f Dockerfile.dev -t erikbrudzinskis/react-frontend .
+
+version: "3"
+services:
+  web:
+    # Normal "build: ." will not work since we want to use Dockerfile.dev
+    build:
+      # Which directory are we working with
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    volumes:
+      # Do not map the node_modules directory to avoid overwriting/deleting it by next step
+      - /app/node_modules
+      # Map the current folder to the container
+      - .:/app
+  tests:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    volumes:
+      - /app/node_modules
+      - .:/app
+    # To run the tests as a separate service we override the default start command
+    command: ["npm", "run", "test"]

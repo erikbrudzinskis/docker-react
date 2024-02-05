@@ -1,0 +1,22 @@
+FROM node:21-alpine
+
+WORKDIR '/app'
+
+COPY package.json .
+RUN npm install
+
+# Instead of copying all the project with COPY . ., we setup a reference to out local machine with the required files via volumes.
+# Thus we will support live-reload.
+# It works similarly to port mapping, where you specify local folder/port and remote folder/port
+# COPY . .
+
+# Example of volume setup (pwd - current directory):
+# docker run -p 3000:3000 -v /app/node_modules -v $(pwd):/app erikbrudzinskis/react-frontend
+# With $(pwd):/app we are mapping our current folder to /app directory inside the container
+# We will also require to bookmark /app/node_modules, because 
+# otherwise everything inside the /app directory (incl. earlier created node_modules) will get overwritten by $(pwd):/app
+
+# If after flag "-v" you have ":", then you are mapping local directory to container's directory.
+# If after flag "-v" you do NOT have ":", then you are saying not to map this particular folder against anything AKA leave it alone.
+
+CMD ["npm", "run", "start"]
