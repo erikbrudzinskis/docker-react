@@ -17,5 +17,4 @@ jobs:
         run: zip -r deploy.zip . -x '*.git*'
  
       - name: Deploy to GitHub Pages
-        uses: einaregilsson/beanstalk-deploy@v21
         run: gh-pages -d build
