@@ -1,70 +1,31 @@
-# Getting Started with Create React App
+# React with Docker
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A simple project based on React, which is used to demonstrate how Docker works.
 
-## Available Scripts
+## Dockerfile
 
-In the project directory, you can run:
+Main Dockerfile is using a two-staged build process. Firstly, it installs dependencies and builds the React project based on 'node' image. Secondly, it transfers the built project to an image based on 'nginx'. Nginx is then automatically started on port 80, which should be mapped on run. To run the container use:
+```sh
+docker build -t erikbrudzinskis/docker-react-production .
+docker run -p 8080:80 erikbrudzinskis/docker-react-production
+```
 
-### `npm start`
+## Dockerfile.dev
+Dockerfile.dev is used to install dependencies and run the project on 'node' image. To support live-reload for development it does not copy a built project to the container. Instead, it should be launched with the volume mapping:
+- `$(pwd):/app`
+- `/app/node_modules`
+The first mapping is required to map our current directory (project directory) to the container, so that the container can pick up any local changes. The second mapping is required to avoid overwriting installed node_modules by the first mapping. To run the container use:
+```sh
+docker build -t erikbrudzinskis/react-frontend -f Dockerfile.dev
+docker run -p 3000:3000 -v /app/node_modules -v $(pwd):/app erikbrudzinskis/react-frontend
+```
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## docker-compose.yml
+An alternative to Dockerfile.dev to avoid having to specify volumes every time we need to run the project. Runs two services:
+- web - the same as building via Dockerfile.dev and running with volume mapping
+- tests - the same as building via Dockerfile.dev and running with volume mapping, but with overwritten default command to `npm run test`
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
-
-### `npm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## CI
+CI is done with Github Actions via two files:
+- deploy.yaml - when there is a push to master branch, it installs, tests and deploys the project to render.com via curl to render deploy hook url.
+- test.yaml - when there is a push to any branch but master or a pull request to master, it installs and tests the project.
